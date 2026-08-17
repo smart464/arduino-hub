@@ -984,7 +984,7 @@ void loop() {
                     <div class="project-card">
                         <div class="project-header"><h3>🕹️ 조이스틱 게임 만들기</h3><span class="difficulty-badge difficulty-hard">심화</span></div>
                         <div class="project-body">
-                            <p>조이스틱으로 LED 8x8 없이도! LCD나 시리얼 모니터로 캐릭터를 움직이고 장애물을 피하는 미니 게임을 만들어요. 조이스틱 값 읽기, 게임 루프, 충돌 판정까지 배워요!</p>
+                            <p>핀 5개짜리 조이스틱 모듈(GND, VCC, VRx, VRy, SW)만 있으면 충분해요! 시리얼 모니터로 캐릭터를 움직이고 장애물을 피하는 미니 게임을 만들어요. 조이스틱 값 읽기, 게임 루프, 충돌 판정까지 배워요!</p>
                             <div class="project-buttons"><button class="btn btn-primary" onclick="showCodeModal('joystickGame')">💻 코드 보기</button><button class="btn btn-secondary" onclick="showCircuitModal('joystickGame')">🔌 회로도</button></div>
                         </div>
                     </div>
@@ -1724,11 +1724,11 @@ void toggleLED() {
                 title: '조이스틱 게임 만들기',
                 code: `// 조이스틱으로 움직이는 미니 게임! (시리얼 모니터로 플레이)
 // 캐릭터(@)를 움직여서 장애물(#)을 피하는 게임이에요.
+// ※ 핀 5개짜리 조이스틱 모듈 기준 (GND, VCC, VRx, VRy, SW) — 부저 없이도 가능!
 
 const int VRx = A0;   // 조이스틱 좌우(X축)
 const int VRy = A1;   // 조이스틱 상하(Y축)
 const int SW  = 2;    // 조이스틱 버튼(눌러서 시작/재시작)
-const int BUZZER = 8; // 부저(충돌하면 소리)
 
 const int W = 10, H = 6;      // 게임판 크기 (가로10 x 세로6)
 int px = 5, py = 3;           // 내 캐릭터 위치
@@ -1741,8 +1741,7 @@ int score = 0;
 void setup() {
   Serial.begin(9600);
   pinMode(SW, INPUT_PULLUP);
-  pinMode(BUZZER, OUTPUT);
-  randomSeed(analogRead(A5));   // 매번 다른 장애물 위치를 위해
+  randomSeed(analogRead(A5));   // 매번 다른 장애물 위치를 위해 (아두이노의 비어있는 핀 사용)
   spawnObstacle();
   Serial.println("=== 조이스틱 게임 시작! ===");
   Serial.println("조이스틱을 움직여서 캐릭터(@)를 조종하세요!");
@@ -1780,8 +1779,7 @@ void loop() {
   // 캐릭터와 장애물이 같은 자리면 충돌!
   if (px == ox && py == oy) {
     gameOver = true;
-    tone(BUZZER, 200, 500);  // 삐- 소리
-    Serial.println("게임 오버! 조이스틱 버튼을 눌러서 다시 시작하세요.");
+    Serial.println("💥 부딪혔다! 게임 오버! 조이스틱 버튼을 눌러서 다시 시작하세요.");
     Serial.print("최종 점수: ");
     Serial.println(score);
     return;
@@ -2355,14 +2353,13 @@ void resetGame() {
                 { toX:50, toY:9,   color:'#f4d03f', label:'노랑 LED = PIN 13' }
             ], '버튼을 누르는 즉시 인터럽트가 LED를 반응시켜요'),
 
-            joystickGame: circuitPhoto('조이스틱 모듈(JOYSTICK)', [
+            joystickGame: circuitPhoto('조이스틱 모듈(JOYSTICK, 5핀)', [
                 { toX:20, toY:171, color:'#111111', label:'검정 GND = GND' },
-                { toX:32, toY:171, color:'#e74c3c', label:'빨강 5V = 5V(VCC)' },
+                { toX:32, toY:171, color:'#e74c3c', label:'빨강 VCC(5V) = 5V' },
                 { toX:44, toY:9,   color:'#3498db', label:'파랑 VRx = A0' },
                 { toX:56, toY:9,   color:'#27ae60', label:'초록 VRy = A1' },
-                { toX:68, toY:9,   color:'#9b59b6', label:'보라 SW(버튼) = PIN 2' },
-                { toX:80, toY:9,   color:'#f39c12', label:'주황 부저 = PIN 8' }
-            ], '조이스틱 X/Y축과 버튼, 부저까지 연결해서 게임을 만들어요')
+                { toX:68, toY:9,   color:'#9b59b6', label:'보라 SW(버튼) = PIN 2' }
+            ], '핀 5개(GND, VCC, VRx, VRy, SW)만 있으면 충분! 부저 없이도 게임이 잘 작동해요')
         };
 
         function showCircuitModal(projectId) {
