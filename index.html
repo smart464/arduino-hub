@@ -2769,13 +2769,60 @@ void toggleLED() {
               ] }
         ];
 
+        // 10컷짜리 뼈대 스토리를 목표 컷수(50)로 자연스럽게 늘려주는 함수.
+        // 원래 장면 사이사이에 감정/전환을 보여주는 '이어주는 컷'을 끼워넣어요.
+        const WEBTOON_FILLERS = [
+            '...',
+            '두리는 잠시 생각에 잠겼어요.',
+            '그 순간!',
+            '조용한 정적이 흘렀어요.',
+            '두리의 눈이 반짝였어요.',
+            '심장이 두근두근했어요.',
+            '한 걸음 더 다가가 봤어요.',
+            '숨을 크게 들이쉬었어요.',
+            '궁금한 표정으로 쳐다봤어요.',
+            '손이 살짝 떨렸어요.',
+            '두리는 고개를 갸웃했어요.',
+            '잠깐의 침묵이 흘렀어요.',
+            '무언가 결심한 표정이었어요.',
+            '두근두근... 다음은 어떻게 될까요?',
+            '두리가 조심스럽게 살펴봤어요.'
+        ];
+
+        function expandPanels(base, target) {
+            if (!base || base.length === 0) return [];
+            if (base.length >= target) return base;
+
+            const n = base.length;
+            const gaps = n - 1;
+            const extra = target - n;
+            const perGap = Math.floor(extra / gaps);
+            const remainder = extra % gaps;
+
+            const result = [];
+            for (let i = 0; i < n; i++) {
+                result.push(base[i]);
+                if (i < gaps) {
+                    const fillCount = perGap + (i < remainder ? 1 : 0);
+                    for (let f = 0; f < fillCount; f++) {
+                        const useImg = (f % 2 === 0) ? base[i].img : base[i + 1].img;
+                        const phrase = WEBTOON_FILLERS[(i * 7 + f) % WEBTOON_FILLERS.length];
+                        result.push({ img: useImg, speaker: '', text: phrase, filler: true });
+                    }
+                }
+            }
+            return result;
+        }
+
+        const WEBTOON_TARGET_CUTS = 50;
+
         function renderWebtoons() {
             const html = webtoonEpisodes.map((ep, idx) => `
                 <div class="function-card" onclick="openWebtoon(${idx})">
                     <div style="border-radius:8px; overflow:hidden; margin-bottom:10px;">${ep.panels[0].img}</div>
                     <div class="function-name" style="font-family:inherit;">${ep.emoji} ${ep.title}</div>
                     <div class="function-desc">${ep.desc}</div>
-                    <div style="text-align:right; color:var(--primary); font-weight:600; font-size:0.85em; margin-top:8px;">${ep.panels.length}컷 읽어보기 ▶</div>
+                    <div style="text-align:right; color:var(--primary); font-weight:600; font-size:0.85em; margin-top:8px;">${WEBTOON_TARGET_CUTS}컷 읽어보기 ▶</div>
                 </div>
             `).join('');
             const g1 = document.getElementById('webtoonGrid');
@@ -2786,12 +2833,13 @@ void toggleLED() {
 
         function openWebtoon(idx) {
             const ep = webtoonEpisodes[idx];
-            document.getElementById('postModalTitle').textContent = ep.title;
-            document.getElementById('postModalContent').innerHTML = ep.panels.map((p, i) => `
-                <div style="margin-bottom:24px; padding-bottom:24px; border-bottom:2px dashed #eee;">
-                    <div style="border-radius:10px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.12);">${p.img}</div>
+            const fullPanels = expandPanels(ep.panels, WEBTOON_TARGET_CUTS);
+            document.getElementById('postModalTitle').textContent = `${ep.title} (${fullPanels.length}컷)`;
+            document.getElementById('postModalContent').innerHTML = fullPanels.map((p, i) => `
+                <div style="margin-bottom:${p.filler ? 14 : 24}px; padding-bottom:${p.filler ? 14 : 24}px; border-bottom:2px dashed #eee; ${p.filler ? 'opacity:0.85;' : ''}">
+                    <div style="border-radius:10px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.12); ${p.filler ? 'max-width:70%; margin:0 auto;' : ''}">${p.img}</div>
                     <div style="display:flex; gap:10px; align-items:flex-start; margin-top:10px;">
-                        <div style="background:#667eea; color:white; font-size:0.75em; font-weight:700; padding:4px 8px; border-radius:20px; flex-shrink:0;">${i+1}컷</div>
+                        <div style="background:${p.filler ? '#aab4e8' : '#667eea'}; color:white; font-size:0.75em; font-weight:700; padding:4px 8px; border-radius:20px; flex-shrink:0;">${i+1}컷</div>
                         <div style="background:#f0f4ff; padding:10px 16px; border-radius:12px; border-top-left-radius:0; line-height:1.6; white-space:pre-wrap; flex:1;">
                             ${p.speaker ? `<strong style="color:var(--primary);">${escapeHtml(p.speaker)}:</strong> ` : ''}${escapeHtml(p.text)}
                         </div>
